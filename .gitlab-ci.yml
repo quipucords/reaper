@@ -1,0 +1,116 @@
+stages:
+  - test
+  - deploy
+  - reap
+
+variables:
+  AWS_DEFAULT_REGION: us-east-1
+  CONTAINER_IMAGE: registry.gitlab.com/${CI_PROJECT_PATH}
+  DOCKER_DRIVER: overlay2
+
+Test Build:
+  image: docker:stable
+  services:
+    - docker:dind
+  stage: test
+  before_script:
+    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
+  script:
+    - docker pull ${CONTAINER_IMAGE}:latest || true
+    - docker build --cache-from ${CONTAINER_IMAGE}:latest .
+
+Deploy Image:
+  image: docker:stable
+  services:
+    - docker:dind
+  stage: deploy
+  only:
+    - master
+  before_script:
+    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
+  script:
+    - docker pull ${CONTAINER_IMAGE}:latest || true
+    - docker build --cache-from ${CONTAINER_IMAGE}:latest --tag ${CONTAINER_IMAGE}:${CI_BUILD_REF} --tag ${CONTAINER_IMAGE}:latest .
+    - docker push ${CONTAINER_IMAGE}:${CI_BUILD_REF}
+    - docker push ${CONTAINER_IMAGE}:latest
+
+.Reaper: &reaper_definition
+  image: ${CONTAINER_IMAGE}:latest
+  stage: reap
+  only:
+    - schedules
+    - web
+  script:
+    - for region in `aws ec2 describe-regions --query "Regions[*].RegionName" --output text`;do echo "Checking $region";for name in `aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text --region $region`;do echo "Verifying that '$name' in '$region' is scaled down";aws autoscaling update-auto-scaling-group --auto-scaling-group-name="$name" --min-size 0 --max-size 0 --desired-capacity 0 --region $region;done;for instanceid in `aws ec2 describe-instances --filters "Name=instance-state-code,Values=16" --query "Reservations[*].Instances[*].InstanceId" --output text --region $region`; do echo "Stopping '$instanceid' in '$region'";aws ec2 stop-instances --instance-ids $instanceid --region $region;done;done;
+
+Reap Customer:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${CUSTOMER_ID}
+    AWS_SECRET_ACCESS_KEY: ${CUSTOMER_KEY}
+
+Reap DEV01:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV01_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV01_KEY}
+
+Reap DEV02:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV02_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV02_KEY}
+
+Reap DEV03:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV03_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV03_KEY}
+
+Reap DEV04:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV04_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV04_KEY}
+
+Reap DEV05:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV05_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV05_KEY}
+
+Reap DEV06:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV06_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV06_KEY}
+
+Reap DEV07:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV07_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV07_KEY}
+
+Reap DEV08:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV08_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV08_KEY}
+
+Reap DEV09:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV09_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV09_KEY}
+
+Reap DEV10:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV10_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV10_KEY}
+
+Reap DEV11:
+  <<: *reaper_definition
+  variables:
+    AWS_ACCESS_KEY_ID: ${DEV11_ID}
+    AWS_SECRET_ACCESS_KEY: ${DEV11_KEY}
