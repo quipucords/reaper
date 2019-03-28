@@ -51,11 +51,11 @@ Deploy Image:
             export ECS_INSTANCE_AGE=`aws ec2 describe-instances --instance-id "${ECS_INSTANCE_ID}" --query "Reservations[0].Instances[0].LaunchTime" --output text`
             echo "ECS Cluster ${ECS_CLUSTER_NAME} started at ${ECS_INSTANCE_AGE}"
             if [[ `date -d "${ECS_INSTANCE_AGE}" -u +%s` -lt `date -d -30minutes -u +%s` ]]; then
-                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for more than 1.5 hours, scaling down.";
+                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for more than 30 minutes, scaling down.";
                 aws autoscaling update-auto-scaling-group --auto-scaling-group-name="${ECS_CLUSTER_NAME}" --min-size 0 --max-size 0 --desired-capacity 0 --region ${ECS_REGION};
-                curl -X POST -H 'Content-type: application/json' --data '{"text":"ECS Cluster '"${ECS_CLUSTER_NAME}"' up for more than 1.5 hours, scaling down."}' ${WEBHOOK_URL}
+                curl -X POST -H 'Content-type: application/json' --data '{"text":"ECS Cluster '"${ECS_CLUSTER_NAME}"' up for more than 30 minutes, scaling down instance '"${ECS_INSTANCE_ID}"'."}' ${WEBHOOK_URL}
             else
-                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for less than 1.5 hours, exiting."
+                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for less than 30 minutes, exiting."
             fi;
         else
             echo "ECS Cluster ${ECS_CLUSTER_NAME} is scaled down, exiting.";
