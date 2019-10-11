@@ -131,12 +131,6 @@ Reap DEV04:
     AWS_ACCESS_KEY_ID: ${DEV04_ID}
     AWS_SECRET_ACCESS_KEY: ${DEV04_KEY}
 
-Reap DEV05:
-  <<: *reaper_definition
-  variables:
-    AWS_ACCESS_KEY_ID: ${DEV05_ID}
-    AWS_SECRET_ACCESS_KEY: ${DEV05_KEY}
-
 Reap DEV06:
   <<: *reaper_definition
   variables:
