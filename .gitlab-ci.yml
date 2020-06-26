@@ -3,6 +3,11 @@ stages:
   - deploy
   - reap
 
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+
 variables:
   AWS_DEFAULT_REGION: us-east-1
   CONTAINER_IMAGE: registry.gitlab.com/${CI_PROJECT_PATH}
@@ -24,8 +29,9 @@ Deploy Image:
   services:
     - docker:dind
   stage: deploy
-  only:
-    - master
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
   before_script:
     - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
   script:
@@ -37,12 +43,11 @@ Deploy Image:
 .ECSReaper: &ecs_reaper_definition
   image: ${CONTAINER_IMAGE}:latest
   stage: reap
-  only:
-    refs:
-      - schedules
-      - web
-    variables:
-      - $ECS == "true"
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule" || $CI_PIPELINE_SOURCE != "web"
+      when: never
+    - if: $ECS == "true"
+      when: on_success
   script:
     - |
         if [[ `aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "${ECS_CLUSTER_NAME}" --query "AutoScalingGroups[*].DesiredCapacity" --output text` -ne 0 ]]; then
@@ -65,12 +70,11 @@ Deploy Image:
 .Reaper: &reaper_definition
   image: ${CONTAINER_IMAGE}:latest
   stage: reap
-  only:
-    refs:
-      - schedules
-      - web
-    variables:
-      - $NIGHTLY == "true"
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule" || $CI_PIPELINE_SOURCE != "web"
+      when: never
+    - if: $NIGHTLY == "true"  
+      when: on_success
   script:
     - for region in `aws ec2 describe-regions --query "Regions[*].RegionName" --output text`;do echo "Checking $region";for name in `aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text --region $region`;do echo "Verifying that '$name' in '$region' is scaled down";aws autoscaling update-auto-scaling-group --auto-scaling-group-name="$name" --min-size 0 --max-size 0 --desired-capacity 0 --region $region;done;for instanceid in `aws ec2 describe-instances --filters "Name=instance-state-code,Values=16" --query "Reservations[*].Instances[*].InstanceId" --output text --region $region`; do echo "Stopping '$instanceid' in '$region'";aws ec2 stop-instances --instance-ids $instanceid --region $region;done;done;
 
