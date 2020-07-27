@@ -44,7 +44,7 @@ Deploy Image:
   image: ${CONTAINER_IMAGE}:latest
   stage: reap
   rules:
-    - if: $CI_PIPELINE_SOURCE != "schedule" || $CI_PIPELINE_SOURCE != "web"
+    - if: $CI_PIPELINE_SOURCE != "schedule" && $CI_PIPELINE_SOURCE != "web"
       when: never
     - if: $ECS == "true"
       when: on_success
@@ -71,7 +71,7 @@ Deploy Image:
   image: ${CONTAINER_IMAGE}:latest
   stage: reap
   rules:
-    - if: $CI_PIPELINE_SOURCE != "schedule" || $CI_PIPELINE_SOURCE != "web"
+    - if: $CI_PIPELINE_SOURCE != "schedule" && $CI_PIPELINE_SOURCE != "web"
       when: never
     - if: $NIGHTLY == "true"  
       when: on_success
