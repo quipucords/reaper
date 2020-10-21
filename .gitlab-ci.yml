@@ -48,24 +48,11 @@ Deploy Image:
       when: never
     - if: $ECS == "true"
       when: on_success
+  before_script:
+    - cd /opt/reaper/
+    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
   script:
-    - |
-        if [[ `aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "${ECS_CLUSTER_NAME}" --query "AutoScalingGroups[*].DesiredCapacity" --output text` -ne 0 ]]; then
-            echo "ECS Cluster ${ECS_CLUSTER_NAME} scaled up, checking age.";
-            export ECS_INSTANCE_ID=`aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "${ECS_CLUSTER_NAME}" --query "AutoScalingGroups[*].Instances[0].InstanceId" --output text`
-            export ECS_INSTANCE_AGE=`aws ec2 describe-instances --instance-id "${ECS_INSTANCE_ID}" --query "Reservations[0].Instances[0].LaunchTime" --output text`
-            echo "ECS Cluster ${ECS_CLUSTER_NAME} started at ${ECS_INSTANCE_AGE}"
-            if [[ `date -d "${ECS_INSTANCE_AGE}" -u +%s` -lt `date -d -30minutes -u +%s` ]]; then
-                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for more than 30 minutes, scaling down.";
-                aws autoscaling update-auto-scaling-group --auto-scaling-group-name="${ECS_CLUSTER_NAME}" --min-size 0 --max-size 0 --desired-capacity 0 --region ${ECS_REGION};
-                curl -X POST -H 'Content-type: application/json' --data '{"text":"ECS Cluster '"${ECS_CLUSTER_NAME}"' up for more than 30 minutes, scaling down instance '"${ECS_INSTANCE_ID}"'."}' ${WEBHOOK_URL}
-            else
-                echo "ECS Cluster ${ECS_CLUSTER_NAME} up for less than 30 minutes, exiting."
-            fi;
-        else
-            echo "ECS Cluster ${ECS_CLUSTER_NAME} is scaled down, exiting.";
-        fi;
-
+    - sh ./scale-down-cluster.sh
 
 .Reaper: &reaper_definition
   image: ${CONTAINER_IMAGE}:latest
@@ -75,8 +62,11 @@ Deploy Image:
       when: never
     - if: $NIGHTLY == "true"
       when: on_success
+  before_script:
+    - cd /opt/reaper/
+    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
   script:
-    - for region in `aws ec2 describe-regions --query "Regions[*].RegionName" --output text`;do echo "Checking $region";for name in `aws autoscaling describe-auto-scaling-groups --query "AutoScalingGroups[*].AutoScalingGroupName" --output text --region $region`;do echo "Verifying that '$name' in '$region' is scaled down";aws autoscaling update-auto-scaling-group --auto-scaling-group-name="$name" --min-size 0 --max-size 0 --desired-capacity 0 --region $region;done;for instanceid in `aws ec2 describe-instances --filters "Name=instance-state-code,Values=16" --query "Reservations[*].Instances[*].InstanceId" --output text --region $region`; do echo "Stopping '$instanceid' in '$region'";aws ec2 stop-instances --instance-ids $instanceid --region $region;done;done;
+    - sh ./scale-down-cluster-dev.sh
 
 Reap ECS CI:
   <<: *ecs_reaper_definition
