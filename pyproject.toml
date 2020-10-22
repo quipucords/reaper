@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "reaper"
+version = "0.1.0"
+description = ""
+authors = ["Brad Smith <brasmith@redhat.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+envparse = "^0.2.0"
+boto3 = "^1.16.4"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
