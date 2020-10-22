@@ -51,8 +51,10 @@ Deploy Image:
   before_script:
     - cd /opt/reaper/
     - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
+    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
   script:
     - sh ./scale-down-cluster.sh
+    - poetry run python ./reaper_delete.py
 
 .Reaper: &reaper_definition
   image: ${CONTAINER_IMAGE}:latest
@@ -65,8 +67,10 @@ Deploy Image:
   before_script:
     - cd /opt/reaper/
     - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
   script:
     - sh ./scale-down-cluster-dev.sh
+    - poetry run python ./reaper_delete.py
 
 Reap ECS CI:
   <<: *ecs_reaper_definition
