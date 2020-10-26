@@ -24,6 +24,15 @@ Test Build:
     - docker pull ${CONTAINER_IMAGE}:latest || true
     - docker build --cache-from ${CONTAINER_IMAGE}:latest .
 
+Test Code:
+  stage: test
+  image: registry.gitlab.com/cloudigrade/images/build-container:latest
+  rules:
+    - when: on_success
+  before_script:
+    - pip install tox poetry
+  script: tox
+
 Deploy Image:
   image: docker:stable
   services:
