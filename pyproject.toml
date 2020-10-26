@@ -15,6 +15,8 @@ flake8-docstrings = "*"
 flake8-import-order = "*"
 isort = "*"
 black = {version = "*", allow-prereleases = true}
+pytest = "*"
+coverage = "*"
 
 [build-system]
 requires = ["poetry>=0.12"]
