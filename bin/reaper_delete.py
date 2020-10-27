@@ -75,9 +75,13 @@ def delete_old_volumes(ec2_client, oldest_allowed_volume_age):
     total_count, total_size = 0, 0
     volumes = describe_volumes_to_delete(ec2_client, oldest_allowed_volume_age)
     for volume in volumes:
-        delete_volume(ec2_client, volume)
-        total_count += 1
-        total_size += float(volume.get("Size", 0.0))
+        try:
+            delete_volume(ec2_client, volume)
+            total_count += 1
+            total_size += float(volume.get("Size", 0.0))
+        except ClientError as e:
+            logger.exception(e)
+            logger.error("Failed to delete volume %s", volume)
     return total_count, total_size
 
 
@@ -129,9 +133,17 @@ def delete_old_snapshots(ec2_client, account, oldest_allowed_snapshot_age):
         ec2_client, account, oldest_allowed_snapshot_age
     )
     for snapshot in snapshots:
-        delete_snapshot(ec2_client, snapshot)
-        total_count += 1
-        total_size += float(snapshot.get("VolumeSize", 0.0))
+        try:
+            delete_snapshot(ec2_client, snapshot)
+            total_count += 1
+            total_size += float(snapshot.get("VolumeSize", 0.0))
+        except ClientError as e:
+            error_code = e.response.get("Error").get("Code")
+            if error_code == "InvalidSnapshot.InUse":
+                logger.info("Skipping because InvalidSnapshot.InUse")
+            else:
+                logger.exception(e)
+                logger.error("Failed to delete snapshot %s", snapshot)
     return total_count, total_size
 
 

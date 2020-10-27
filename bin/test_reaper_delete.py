@@ -2,6 +2,8 @@
 import datetime
 from unittest.mock import Mock, call, patch
 
+from botocore.exceptions import ClientError
+
 import reaper_delete
 
 
@@ -69,6 +71,27 @@ def test_delete_old_volumes(mock_describe, mock_delete):
     mock_delete.assert_has_calls(expected_delete_calls)
 
 
+@patch("reaper_delete.delete_volume")
+@patch("reaper_delete.describe_volumes_to_delete")
+def test_delete_old_volumes_exception(mock_describe, mock_delete):
+    """Test delete_old_volumes handles unexpected failures."""
+    ec2_client = Mock()
+    fake_volumes = [{"Size": "5"}, {"Size": "1"}, {}]
+    mock_describe.return_value = fake_volumes
+    client_error = ClientError(
+        error_response={"Error": {"Code": "UnknownError"}},
+        operation_name=Mock(),
+    )
+    mock_delete.side_effect = [True, client_error, True]
+
+    total_count, total_size = reaper_delete.delete_old_volumes(ec2_client, Mock())
+
+    assert total_count == 2  # because the second one failed
+    assert total_size == 5  # because the second one failed
+    expected_delete_calls = [call(ec2_client, volume) for volume in fake_volumes]
+    mock_delete.assert_has_calls(expected_delete_calls)
+
+
 def test_describe_volumes_to_delete():
     """Test describe_volumes_to_delete filters described results as expected."""
     oldest_allowed = datetime.datetime(2020, 10, 26, 12, 34, 56)
@@ -107,6 +130,29 @@ def test_delete_old_snapshots(mock_describe, mock_delete):
 
     assert total_count == 3
     assert total_size == 6
+    expected_delete_calls = [call(ec2_client, snapshot) for snapshot in fake_snapshots]
+    mock_delete.assert_has_calls(expected_delete_calls)
+
+
+@patch("reaper_delete.delete_snapshot")
+@patch("reaper_delete.describe_snapshots_to_delete")
+def test_delete_old_snapshots_exception(mock_describe, mock_delete):
+    """Test delete_old_snapshots handles unexpected failures."""
+    ec2_client = Mock()
+    fake_snapshots = [{"VolumeSize": "5"}, {"VolumeSize": "1"}, {}]
+    mock_describe.return_value = fake_snapshots
+    client_error = ClientError(
+        error_response={"Error": {"Code": "UnknownError"}},
+        operation_name=Mock(),
+    )
+    mock_delete.side_effect = [True, client_error, True]
+
+    total_count, total_size = reaper_delete.delete_old_snapshots(
+        ec2_client, Mock(), Mock()
+    )
+
+    assert total_count == 2  # because the second one failed
+    assert total_size == 5  # because the second one failed
     expected_delete_calls = [call(ec2_client, snapshot) for snapshot in fake_snapshots]
     mock_delete.assert_has_calls(expected_delete_calls)
 
