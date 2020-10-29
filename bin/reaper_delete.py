@@ -68,10 +68,6 @@ def has_bypass_tag(described_resource):
 
 def delete_old_volumes(ec2_client, oldest_allowed_volume_age):
     """Delete available volumes older than the allowed age."""
-    logger.info(
-        f"Finding volumes older than {oldest_allowed_volume_age} "
-        f"({REAP_AGE_VOLUMES} seconds old)"
-    )
     total_count, total_size = 0, 0
     volumes = describe_volumes_to_delete(ec2_client, oldest_allowed_volume_age)
     for volume in volumes:
@@ -124,10 +120,6 @@ def delete_volume(ec2_client, volume):
 
 def delete_old_snapshots(ec2_client, account, oldest_allowed_snapshot_age):
     """Delete completed snapshots older than the allowed age."""
-    logger.info(
-        f"Finding snapshots older than {oldest_allowed_snapshot_age} "
-        f"({REAP_AGE_SNAPSHOTS} seconds old)"
-    )
     total_count, total_size = 0, 0
     snapshots = describe_snapshots_to_delete(
         ec2_client, account, oldest_allowed_snapshot_age
@@ -194,6 +186,14 @@ def reap():
     total_snapshot_count = 0
     total_snapshot_size = 0.0
 
+    logger.info(
+        f"Finding volumes older than {oldest_allowed_volume_age} "
+        f"({REAP_AGE_VOLUMES} seconds old)"
+    )
+    logger.info(
+        f"Finding snapshots older than {oldest_allowed_snapshot_age} "
+        f"({REAP_AGE_SNAPSHOTS} seconds old)"
+    )
     try:
         for region_name in get_region_names():
             logger.info(f"Checking {region_name}")
