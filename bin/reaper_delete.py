@@ -75,13 +75,17 @@ def delete_old_volumes(ec2_client, oldest_allowed_volume_age):
             delete_volume(ec2_client, volume)
             total_count += 1
             total_size += float(volume.get("Size", 0.0))
-        except ClientError as e:
-            error_code = e.response.get("Error").get("Code")
+        except ClientError as exception:
+            error_code = exception.response.get("Error", {}).get("Code")
             if error_code == "InvalidVolume.NotFound":
                 logger.info("Skipping because InvalidVolume.NotFound")
             else:
-                logger.exception(e)
-                logger.error("Failed to delete volume %s", volume)
+                logger.error(
+                    "Failed to delete volume %s because %s; %s",
+                    volume.get("VolumeId"),
+                    error_code,
+                    exception,
+                )
     return total_count, total_size
 
 
@@ -133,13 +137,17 @@ def delete_old_snapshots(ec2_client, account, oldest_allowed_snapshot_age):
             delete_snapshot(ec2_client, snapshot)
             total_count += 1
             total_size += float(snapshot.get("VolumeSize", 0.0))
-        except ClientError as e:
-            error_code = e.response.get("Error").get("Code")
+        except ClientError as exception:
+            error_code = exception.response.get("Error", {}).get("Code")
             if error_code == "InvalidSnapshot.InUse":
                 logger.info("Skipping because InvalidSnapshot.InUse")
             else:
-                logger.exception(e)
-                logger.error("Failed to delete snapshot %s", snapshot)
+                logger.error(
+                    "Failed to delete snapshot %s because %s; %s",
+                    snapshot.get("SnapshotId"),
+                    error_code,
+                    exception,
+                )
     return total_count, total_size
 
 
