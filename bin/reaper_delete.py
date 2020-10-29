@@ -76,8 +76,12 @@ def delete_old_volumes(ec2_client, oldest_allowed_volume_age):
             total_count += 1
             total_size += float(volume.get("Size", 0.0))
         except ClientError as e:
-            logger.exception(e)
-            logger.error("Failed to delete volume %s", volume)
+            error_code = e.response.get("Error").get("Code")
+            if error_code == "InvalidVolume.NotFound":
+                logger.info("Skipping because InvalidVolume.NotFound")
+            else:
+                logger.exception(e)
+                logger.error("Failed to delete volume %s", volume)
     return total_count, total_size
 
 
