@@ -68,8 +68,12 @@ def has_bypass_tag(described_resource):
 
 def delete_old_volumes(ec2_client, oldest_allowed_volume_age):
     """Delete available volumes older than the allowed age."""
-    total_count, total_size = 0, 0
     volumes = describe_volumes_to_delete(ec2_client, oldest_allowed_volume_age)
+    initial_count = len(volumes)
+    initial_size = sum((float(volume.get("Size", 0.0)) for volume in volumes))
+    logger.info("Found %s volumes having total %s GB", initial_count, initial_size)
+
+    total_count, total_size = 0, 0
     for volume in volumes:
         try:
             delete_volume(ec2_client, volume)
@@ -128,10 +132,16 @@ def delete_volume(ec2_client, volume):
 
 def delete_old_snapshots(ec2_client, account, oldest_allowed_snapshot_age):
     """Delete completed snapshots older than the allowed age."""
-    total_count, total_size = 0, 0
     snapshots = describe_snapshots_to_delete(
         ec2_client, account, oldest_allowed_snapshot_age
     )
+    initial_count = len(snapshots)
+    initial_size = sum(
+        (float(snapshot.get("VolumeSize", 0.0)) for snapshot in snapshots)
+    )
+    logger.info("Found %s snapshots having total %s GB", initial_count, initial_size)
+
+    total_count, total_size = 0, 0
     for snapshot in snapshots:
         try:
             delete_snapshot(ec2_client, snapshot)
