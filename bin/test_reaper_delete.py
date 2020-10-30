@@ -57,7 +57,8 @@ def test_has_bypass_tag_not_found():
 
 @patch("reaper_delete.delete_volume")
 @patch("reaper_delete.describe_volumes_to_delete")
-def test_delete_old_volumes(mock_describe, mock_delete):
+@patch("reaper_delete.logger")
+def test_delete_old_volumes(mock_logger, mock_describe, mock_delete):
     """Test delete_old_volumes typical behavior."""
     ec2_client = Mock()
     fake_volumes = [{"Size": "5"}, {"Size": "1"}, {}]
@@ -69,6 +70,8 @@ def test_delete_old_volumes(mock_describe, mock_delete):
     assert total_size == 6
     expected_delete_calls = [call(ec2_client, volume) for volume in fake_volumes]
     mock_delete.assert_has_calls(expected_delete_calls)
+    expected_info_calls = [call("Found %s volumes having total %s GB", 3, 6.0)]
+    mock_logger.info.assert_has_calls(expected_info_calls)
 
 
 @patch("reaper_delete.delete_volume")
@@ -118,7 +121,8 @@ def test_describe_volumes_to_delete():
 
 @patch("reaper_delete.delete_snapshot")
 @patch("reaper_delete.describe_snapshots_to_delete")
-def test_delete_old_snapshots(mock_describe, mock_delete):
+@patch("reaper_delete.logger")
+def test_delete_old_snapshots(mock_logger, mock_describe, mock_delete):
     """Test delete_old_snapshots typical behavior."""
     ec2_client = Mock()
     fake_snapshots = [{"VolumeSize": "5"}, {"VolumeSize": "1"}, {}]
@@ -132,6 +136,9 @@ def test_delete_old_snapshots(mock_describe, mock_delete):
     assert total_size == 6
     expected_delete_calls = [call(ec2_client, snapshot) for snapshot in fake_snapshots]
     mock_delete.assert_has_calls(expected_delete_calls)
+
+    expected_info_calls = [call("Found %s snapshots having total %s GB", 3, 6.0)]
+    mock_logger.info.assert_has_calls(expected_info_calls)
 
 
 @patch("reaper_delete.delete_snapshot")
