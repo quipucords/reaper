@@ -69,7 +69,7 @@ Deploy Image:
       when: on_success
   before_script:
     - cd /opt/reaper/
-    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
+    - export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
     - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
   script:
     - sh ./scale-down-cluster.sh
@@ -85,7 +85,7 @@ Deploy Image:
       when: on_success
   before_script:
     - cd /opt/reaper/
-    - export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+    - export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
     - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
   script:
     - sh ./scale-down-cluster-dev.sh
