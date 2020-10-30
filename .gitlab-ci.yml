@@ -70,7 +70,7 @@ Deploy Image:
   before_script:
     - cd /opt/reaper/
     - export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
-    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
+    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
   script:
     - sh ./scale-down-cluster.sh
     - poetry run python ./reaper_delete.py
@@ -86,7 +86,7 @@ Deploy Image:
   before_script:
     - cd /opt/reaper/
     - export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG
+    - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
   script:
     - sh ./scale-down-cluster-dev.sh
     - poetry run python ./reaper_delete.py
