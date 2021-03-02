@@ -14,50 +14,50 @@ variables: &global-variables
   DOCKER_DRIVER: overlay2
   GIT_STRATEGY: none
 
-Test Build:
-  image: docker:stable
-  services:
-    - docker:dind
-  stage: test
-  variables:
-    <<: *global-variables
-    GIT_STRATEGY: fetch
-  before_script:
-    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
-  script:
-    - docker pull ${CONTAINER_IMAGE}:latest || true
-    - docker build --cache-from ${CONTAINER_IMAGE}:latest .
+# Test Build:
+#   image: docker:stable
+#   services:
+#     - docker:dind
+#   stage: test
+#   variables:
+#     <<: *global-variables
+#     GIT_STRATEGY: fetch
+#   before_script:
+#     - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
+#   script:
+#     - docker pull ${CONTAINER_IMAGE}:latest || true
+#     - docker build --cache-from ${CONTAINER_IMAGE}:latest .
 
-Test Code:
-  stage: test
-  image: registry.gitlab.com/cloudigrade/images/build-container:latest
-  variables:
-    <<: *global-variables
-    GIT_STRATEGY: fetch
-  rules:
-    - when: on_success
-  before_script:
-    - pip install tox poetry
-  script: tox
+# Test Code:
+#   stage: test
+#   image: registry.gitlab.com/cloudigrade/images/build-container:latest
+#   variables:
+#     <<: *global-variables
+#     GIT_STRATEGY: fetch
+#   rules:
+#     - when: on_success
+#   before_script:
+#     - pip install tox poetry
+#   script: tox
 
-Deploy Image:
-  image: docker:stable
-  services:
-    - docker:dind
-  stage: deploy
-  variables:
-    <<: *global-variables
-    GIT_STRATEGY: fetch
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: on_success
-  before_script:
-    - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
-  script:
-    - docker pull ${CONTAINER_IMAGE}:latest || true
-    - docker build --cache-from ${CONTAINER_IMAGE}:latest --tag ${CONTAINER_IMAGE}:${CI_BUILD_REF} --tag ${CONTAINER_IMAGE}:latest .
-    - docker push ${CONTAINER_IMAGE}:${CI_BUILD_REF}
-    - docker push ${CONTAINER_IMAGE}:latest
+# Deploy Image:
+#   image: docker:stable
+#   services:
+#     - docker:dind
+#   stage: deploy
+#   variables:
+#     <<: *global-variables
+#     GIT_STRATEGY: fetch
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#       when: on_success
+#   before_script:
+#     - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} registry.gitlab.com
+#   script:
+#     - docker pull ${CONTAINER_IMAGE}:latest || true
+#     - docker build --cache-from ${CONTAINER_IMAGE}:latest --tag ${CONTAINER_IMAGE}:${CI_BUILD_REF} --tag ${CONTAINER_IMAGE}:latest .
+#     - docker push ${CONTAINER_IMAGE}:${CI_BUILD_REF}
+#     - docker push ${CONTAINER_IMAGE}:latest
 
 .ECSReaper: &ecs_reaper_definition
   image: ${CONTAINER_IMAGE}:latest
