@@ -207,23 +207,23 @@ Reap DEV11:
     AWS_ACCESS_KEY_ID: ${DEV11_ID}
     AWS_SECRET_ACCESS_KEY: ${DEV11_KEY}
 
-Reap QE01:
-  <<: *reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${QE01_ID}
-    AWS_SECRET_ACCESS_KEY: ${QE01_KEY}
+# Reap QE01:
+#   <<: *reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${QE01_ID}
+#     AWS_SECRET_ACCESS_KEY: ${QE01_KEY}
 
-Reap QE02:
-  <<: *reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${QE02_ID}
-    AWS_SECRET_ACCESS_KEY: ${QE02_KEY}
+# Reap QE02:
+#   <<: *reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${QE02_ID}
+#     AWS_SECRET_ACCESS_KEY: ${QE02_KEY}
 
-Reap QE03:
-  <<: *reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${QE03_ID}
-    AWS_SECRET_ACCESS_KEY: ${QE03_KEY}
+# Reap QE03:
+#   <<: *reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${QE03_ID}
+#     AWS_SECRET_ACCESS_KEY: ${QE03_KEY}
