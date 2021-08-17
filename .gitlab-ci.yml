@@ -91,29 +91,29 @@ variables: &global-variables
     - sh ./scale-down-cluster-dev.sh
     - poetry run python ./reaper_delete.py
 
-Reap ECS CI:
-  <<: *ecs_reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${CI_ID}
-    AWS_SECRET_ACCESS_KEY: ${CI_KEY}
-    ECS_CLUSTER_NAME: ${CI_ECS_CLUSTER}
+# Reap ECS CI:
+#   <<: *ecs_reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${CI_ID}
+#     AWS_SECRET_ACCESS_KEY: ${CI_KEY}
+#     ECS_CLUSTER_NAME: ${CI_ECS_CLUSTER}
 
-Reap ECS Test:
-  <<: *ecs_reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${TEST_ID}
-    AWS_SECRET_ACCESS_KEY: ${TEST_KEY}
-    ECS_CLUSTER_NAME: ${TEST_ECS_CLUSTER}
+# Reap ECS Test:
+#   <<: *ecs_reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${TEST_ID}
+#     AWS_SECRET_ACCESS_KEY: ${TEST_KEY}
+#     ECS_CLUSTER_NAME: ${TEST_ECS_CLUSTER}
 
-Reap ECS Stage:
-  <<: *ecs_reaper_definition
-  variables:
-    <<: *global-variables
-    AWS_ACCESS_KEY_ID: ${STAGE_ID}
-    AWS_SECRET_ACCESS_KEY: ${STAGE_KEY}
-    ECS_CLUSTER_NAME: ${STAGE_ECS_CLUSTER}
+# Reap ECS Stage:
+#   <<: *ecs_reaper_definition
+#   variables:
+#     <<: *global-variables
+#     AWS_ACCESS_KEY_ID: ${STAGE_ID}
+#     AWS_SECRET_ACCESS_KEY: ${STAGE_KEY}
+#     ECS_CLUSTER_NAME: ${STAGE_ECS_CLUSTER}
 
 Reap ECS Prod:
   <<: *ecs_reaper_definition
