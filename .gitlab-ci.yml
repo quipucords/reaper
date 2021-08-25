@@ -72,7 +72,6 @@ variables: &global-variables
     - export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
     - export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
   script:
-    - sh ./scale-down-cluster.sh
     - poetry run python ./reaper_delete.py
 
 .Reaper: &reaper_definition
@@ -107,13 +106,12 @@ variables: &global-variables
 #     AWS_SECRET_ACCESS_KEY: ${TEST_KEY}
 #     ECS_CLUSTER_NAME: ${TEST_ECS_CLUSTER}
 
-# Reap ECS Stage:
-#   <<: *ecs_reaper_definition
-#   variables:
-#     <<: *global-variables
-#     AWS_ACCESS_KEY_ID: ${STAGE_ID}
-#     AWS_SECRET_ACCESS_KEY: ${STAGE_KEY}
-#     ECS_CLUSTER_NAME: ${STAGE_ECS_CLUSTER}
+Reap ECS Stage:
+  <<: *ecs_reaper_definition
+  variables:
+    <<: *global-variables
+    AWS_ACCESS_KEY_ID: ${STAGE_ID}
+    AWS_SECRET_ACCESS_KEY: ${STAGE_KEY}
 
 Reap ECS Prod:
   <<: *ecs_reaper_definition
@@ -121,7 +119,6 @@ Reap ECS Prod:
     <<: *global-variables
     AWS_ACCESS_KEY_ID: ${PROD_ID}
     AWS_SECRET_ACCESS_KEY: ${PROD_KEY}
-    ECS_CLUSTER_NAME: ${PROD_ECS_CLUSTER}
 
 Reap Customer:
   <<: *reaper_definition
