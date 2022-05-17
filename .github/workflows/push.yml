@@ -1,0 +1,40 @@
+name: Push
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
+  AWS_DEFAULT_REGION: us-east-1
+
+on: [push]
+
+jobs:
+  test-docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    container:
+      image: docker:latest
+    env:
+      GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
+      GHCR_BOT_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "${GHCR_BOT_TOKEN}" | docker login ghcr.io -u ${GHCR_BOT_USERNAME} --password-stdin
+      - run: docker pull $IMAGE_NAME:latest || true
+      - run: docker build --cache-from $IMAGE_NAME:latest .
+
+  deploy-build-and-push-image:
+    name: Build and Push Image
+    if: github.ref == 'refs/heads/master'
+    needs: [test-docker]
+    runs-on: ubuntu-latest
+    container:
+      image: docker:latest
+    env:
+      GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
+      GHCR_BOT_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "${GHCR_BOT_TOKEN}" | docker login ghcr.io -u ${GHCR_BOT_USERNAME} --password-stdin
+      - run: docker pull $IMAGE_NAME:latest || true
+      - run: docker build --cache-from ${IMAGE_NAME}:latest --tag ${IMAGE_NAME}:${{ github.sha }} --tag ${IMAGE_NAME}:latest .
+      - run: docker push ${IMAGE_NAME}:${{ github.sha }}
+      - run: docker push ${IMAGE_NAME}:latest
