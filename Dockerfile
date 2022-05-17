@@ -1,10 +1,17 @@
-FROM python:3.8-alpine
+### Base Image
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6 as base
 
-RUN apk add --no-cache coreutils curl gcc musl-dev libffi-dev libressl-dev
-RUN pip install awscli poetry
-RUN apk del gcc musl-dev libffi-dev libressl-dev
-
+ENV VIRTUAL_ENV=/opt/reaper/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 WORKDIR /opt/reaper/
-COPY poetry.lock pyproject.toml /opt/reaper/
-COPY bin/ /opt/reaper/
-RUN poetry install --no-dev
+COPY pyproject.toml poetry.lock ./
+
+RUN microdnf update \
+    && microdnf install python38 \
+    && python3 -m pip install -U pip \
+    && python3 -m pip install awscli \
+    && python3 -m pip install poetry \
+    && poetry config virtualenvs.in-project true \
+    && poetry install -n --no-dev
+
+COPY bin/ ./
