@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        account: [{id: DEV01_ID, key: DEV01_KEY}, {id: DEV02_ID, key: DEV02_KEY}, {id: DEV03_ID, key: DEV03_KEY}, {id: DEV04_ID, key: DEV04_KEY}, {id: DEV05_ID, key: DEV05_KEY}, {id: DEV06_ID, key: DEV06_KEY}, {id: DEV07_ID, key: DEV07_KEY}, {id: DEV08_ID, key: DEV08_KEY}, {id: DEV09_ID, key: DEV09_KEY}, {id: DEV10_ID, key: DEV10_KEY}, {id: DEV11_ID, key: DEV11_KEY}, {id: QE01_ID, key: QE01_KEY}, {id: QE02_ID, key: QE02_KEY}, {id: QE03_ID, key: QE03_KEY}]
+        account: [{id: DEV01_ID, key: DEV01_KEY}, {id: DEV02_ID, key: DEV02_KEY}, {id: DEV03_ID, key: DEV03_KEY}, {id: DEV04_ID, key: DEV04_KEY}, {id: DEV05_ID, key: DEV05_KEY}, {id: DEV06_ID, key: DEV06_KEY}, {id: DEV07_ID, key: DEV07_KEY}, {id: DEV08_ID, key: DEV08_KEY}, {id: DEV09_ID, key: DEV09_KEY}, {id: DEV10_ID, key: DEV10_KEY}, {id: DEV11_ID, key: DEV11_KEY}]
     name: reap dev
     if: github.event.schedule != '30 * * * *'
     needs: [deploy-build-and-push-image]
