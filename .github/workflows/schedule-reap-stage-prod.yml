@@ -1,0 +1,43 @@
+name: Scheduled reap stage and prod accounts
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
+  AWS_DEFAULT_REGION: us-east-1
+
+on:
+  schedule:
+    - cron: '30 * * * *'
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-build.yml
+    secrets:
+      GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
+      GHCR_BOT_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
+  reap-stage-prod:
+    strategy:
+      fail-fast: false
+      matrix:
+        account:
+          - {id: CUSTOMER_ID, key: CUSTOMER_KEY}
+          - {id: PROD_ID, key: PROD_KEY}
+          - {id: STAGE_ID, key: STAGE_KEY}
+    name: reap stage and prod
+    needs: [docker]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cloudigrade/reaper:latest
+      credentials:
+        username: ${{ secrets.GHCR_BOT_USERNAME }}
+        password: ${{ secrets.GHCR_BOT_TOKEN }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets[matrix.account.id] }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets[matrix.account.key] }}
+      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+    steps:
+      - run: |
+          cd /opt/reaper
+          export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY ECS_CLUSTER_NAME
+          export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
+          poetry run python ./reaper_delete.py
+
