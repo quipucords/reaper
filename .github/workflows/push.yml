@@ -1,4 +1,4 @@
-name: Build
+name: Test and build
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
@@ -11,7 +11,17 @@ on:
       - 'master'
 
 jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    container:
+      image: python:alpine
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install poetry
+      - run: poetry install
+      - run: poetry run pytest
   docker:
+    needs: [pytest]
     uses: ./.github/workflows/docker-build.yml
     secrets:
       GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
