@@ -1,0 +1,51 @@
+name: Scheduled reap dev accounts
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
+  AWS_DEFAULT_REGION: us-east-1
+
+on:
+  schedule:
+    - cron: '0 20 * * *'
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-build.yml
+    secrets:
+      GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
+      GHCR_BOT_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
+  reap-dev:
+    strategy:
+      fail-fast: false
+      matrix:
+        account:
+          - {id: DEV01_ID, key: DEV01_KEY}
+          - {id: DEV02_ID, key: DEV02_KEY}
+          - {id: DEV03_ID, key: DEV03_KEY}
+          - {id: DEV04_ID, key: DEV04_KEY}
+          - {id: DEV05_ID, key: DEV05_KEY}
+          - {id: DEV06_ID, key: DEV06_KEY}
+          - {id: DEV07_ID, key: DEV07_KEY}
+          - {id: DEV08_ID, key: DEV08_KEY}
+          - {id: DEV09_ID, key: DEV09_KEY}
+          - {id: DEV10_ID, key: DEV10_KEY}
+          - {id: DEV11_ID, key: DEV11_KEY}
+    name: reap dev
+    needs: [docker]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cloudigrade/reaper:latest
+      credentials:
+        username: ${{ secrets.GHCR_BOT_USERNAME }}
+        password: ${{ secrets.GHCR_BOT_TOKEN }}
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets[matrix.account.id] }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets[matrix.account.key] }}
+      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+    steps:
+      - run: |
+          cd /opt/reaper
+          export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+          export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
+          sh ./scale-down-cluster-dev.sh
+          poetry run python ./reaper_delete.py
