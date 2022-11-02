@@ -1,29 +1,29 @@
-"""Unit tests for reaper_delete script."""
+"""Unit tests for reaper.aws_delete."""
 import datetime
 from unittest.mock import Mock, call, patch
 
 from botocore.exceptions import ClientError
 
-import reaper_delete
+import reaper.aws_delete
 
 
-@patch("reaper_delete.boto3")
+@patch("reaper.aws_delete.boto3")
 def test_get_account(mock_boto3):
     """Test getting the current active AWS account."""
     expected_account = "123456789"
     fake_response = {"Account": expected_account}
     mock_boto3.client.return_value.get_caller_identity.return_value = fake_response
-    account = reaper_delete.get_account()
+    account = reaper.aws_delete.get_account()
     assert account == expected_account
 
 
-@patch("reaper_delete.boto3")
+@patch("reaper.aws_delete.boto3")
 def test_get_region_names(mock_boto3):
     """Test getting a list of all available region names."""
     expected_regions = ["hello", "world"]
     fake_response = {"Regions": [{"RegionName": name} for name in expected_regions]}
     mock_boto3.client.return_value.describe_regions.return_value = fake_response
-    regions = reaper_delete.get_region_names()
+    regions = reaper.aws_delete.get_region_names()
     assert regions == expected_regions
 
 
@@ -32,16 +32,16 @@ def test_has_bypass_tag_found():
     resource = {
         "Tags": [
             {"Key": "potato", "Value": "gems"},
-            {"Key": reaper_delete.REAP_BYPASS_TAG, "Value": "precious"},
+            {"Key": reaper.aws_delete.REAP_BYPASS_TAG, "Value": "precious"},
         ]
     }
-    assert reaper_delete.has_bypass_tag(resource)
+    assert reaper.aws_delete.has_bypass_tag(resource)
 
 
 def test_has_bypass_tag_no_tags():
     """Test test_has_bypass_tag is False with no tags."""
     resource = {"hello": "world"}
-    assert not reaper_delete.has_bypass_tag(resource)
+    assert not reaper.aws_delete.has_bypass_tag(resource)
 
 
 def test_has_bypass_tag_not_found():
@@ -52,19 +52,19 @@ def test_has_bypass_tag_not_found():
             {"Key": "taters", "Value": "precious"},
         ]
     }
-    assert not reaper_delete.has_bypass_tag(resource)
+    assert not reaper.aws_delete.has_bypass_tag(resource)
 
 
-@patch("reaper_delete.delete_volume")
-@patch("reaper_delete.describe_volumes_to_delete")
-@patch("reaper_delete.logger")
+@patch("reaper.aws_delete.delete_volume")
+@patch("reaper.aws_delete.describe_volumes_to_delete")
+@patch("reaper.aws_delete.logger")
 def test_delete_old_volumes(mock_logger, mock_describe, mock_delete):
     """Test delete_old_volumes typical behavior."""
     ec2_client = Mock()
     fake_volumes = [{"Size": "5"}, {"Size": "1"}, {}]
     mock_describe.return_value = fake_volumes
 
-    total_count, total_size = reaper_delete.delete_old_volumes(ec2_client, Mock())
+    total_count, total_size = reaper.aws_delete.delete_old_volumes(ec2_client, Mock())
 
     assert total_count == 3
     assert total_size == 6
@@ -74,8 +74,8 @@ def test_delete_old_volumes(mock_logger, mock_describe, mock_delete):
     mock_logger.info.assert_has_calls(expected_info_calls)
 
 
-@patch("reaper_delete.delete_volume")
-@patch("reaper_delete.describe_volumes_to_delete")
+@patch("reaper.aws_delete.delete_volume")
+@patch("reaper.aws_delete.describe_volumes_to_delete")
 def test_delete_old_volumes_exception(mock_describe, mock_delete):
     """Test delete_old_volumes handles unexpected failures."""
     ec2_client = Mock()
@@ -87,7 +87,7 @@ def test_delete_old_volumes_exception(mock_describe, mock_delete):
     )
     mock_delete.side_effect = [True, client_error, True]
 
-    total_count, total_size = reaper_delete.delete_old_volumes(ec2_client, Mock())
+    total_count, total_size = reaper.aws_delete.delete_old_volumes(ec2_client, Mock())
 
     assert total_count == 2  # because the second one failed
     assert total_size == 5  # because the second one failed
@@ -105,7 +105,7 @@ def test_describe_volumes_to_delete():
             {"CreateTime": older},  # ready to delete
             {"CreateTime": older, "Attachments": []},  # ready to delete
             {"CreateTime": older, "Attachments": ["some-value"]},
-            {"CreateTime": older, "Tags": [{"Key": reaper_delete.REAP_BYPASS_TAG}]},
+            {"CreateTime": older, "Tags": [{"Key": reaper.aws_delete.REAP_BYPASS_TAG}]},
             {"CreateTime": oldest_allowed},
             {"CreateTime": younger},
         ]
@@ -114,21 +114,21 @@ def test_describe_volumes_to_delete():
     ec2_client = Mock()
     ec2_client.describe_volumes.return_value = fake_response
 
-    volumes = reaper_delete.describe_volumes_to_delete(ec2_client, oldest_allowed)
+    volumes = reaper.aws_delete.describe_volumes_to_delete(ec2_client, oldest_allowed)
 
     assert volumes == expected_volumes
 
 
-@patch("reaper_delete.delete_snapshot")
-@patch("reaper_delete.describe_snapshots_to_delete")
-@patch("reaper_delete.logger")
+@patch("reaper.aws_delete.delete_snapshot")
+@patch("reaper.aws_delete.describe_snapshots_to_delete")
+@patch("reaper.aws_delete.logger")
 def test_delete_old_snapshots(mock_logger, mock_describe, mock_delete):
     """Test delete_old_snapshots typical behavior."""
     ec2_client = Mock()
     fake_snapshots = [{"VolumeSize": "5"}, {"VolumeSize": "1"}, {}]
     mock_describe.return_value = fake_snapshots
 
-    total_count, total_size = reaper_delete.delete_old_snapshots(
+    total_count, total_size = reaper.aws_delete.delete_old_snapshots(
         ec2_client, Mock(), Mock()
     )
 
@@ -141,8 +141,8 @@ def test_delete_old_snapshots(mock_logger, mock_describe, mock_delete):
     mock_logger.info.assert_has_calls(expected_info_calls)
 
 
-@patch("reaper_delete.delete_snapshot")
-@patch("reaper_delete.describe_snapshots_to_delete")
+@patch("reaper.aws_delete.delete_snapshot")
+@patch("reaper.aws_delete.describe_snapshots_to_delete")
 def test_delete_old_snapshots_exception(mock_describe, mock_delete):
     """Test delete_old_snapshots handles unexpected failures."""
     ec2_client = Mock()
@@ -154,7 +154,7 @@ def test_delete_old_snapshots_exception(mock_describe, mock_delete):
     )
     mock_delete.side_effect = [True, client_error, True]
 
-    total_count, total_size = reaper_delete.delete_old_snapshots(
+    total_count, total_size = reaper.aws_delete.delete_old_snapshots(
         ec2_client, Mock(), Mock()
     )
 
@@ -173,7 +173,7 @@ def test_describe_snapshots_to_delete():
         "Snapshots": [
             {"StartTime": older},  # ready to delete
             {"StartTime": older},  # ready to delete
-            {"StartTime": older, "Tags": [{"Key": reaper_delete.REAP_BYPASS_TAG}]},
+            {"StartTime": older, "Tags": [{"Key": reaper.aws_delete.REAP_BYPASS_TAG}]},
             {"StartTime": oldest_allowed},
             {"StartTime": younger},
         ]
@@ -182,20 +182,20 @@ def test_describe_snapshots_to_delete():
     ec2_client = Mock()
     ec2_client.describe_snapshots.return_value = fake_response
 
-    volumes = reaper_delete.describe_snapshots_to_delete(
+    volumes = reaper.aws_delete.describe_snapshots_to_delete(
         ec2_client, Mock(), oldest_allowed
     )
 
     assert volumes == expected_snapshots
 
 
-@patch("reaper_delete.delete_old_snapshots")
-@patch("reaper_delete.delete_old_volumes")
-@patch("reaper_delete.boto3")
-@patch("reaper_delete.get_region_names")
-@patch("reaper_delete.get_now")
-@patch("reaper_delete.get_account")
-@patch("reaper_delete.logger")
+@patch("reaper.aws_delete.delete_old_snapshots")
+@patch("reaper.aws_delete.delete_old_volumes")
+@patch("reaper.aws_delete.boto3")
+@patch("reaper.aws_delete.get_region_names")
+@patch("reaper.aws_delete.get_now")
+@patch("reaper.aws_delete.get_account")
+@patch("reaper.aws_delete.logger")
 def test_reap(
     mock_logger,
     mock_get_account,
@@ -217,7 +217,7 @@ def test_reap(
         call("Deleted 8 snapshots having total 10.0 GB"),
     ]
 
-    reaper_delete.reap()
+    reaper.aws_delete.reap()
 
     assert len(mock_delete_old_volumes.mock_calls) == len(fake_regions)
     assert len(mock_delete_old_snapshots.mock_calls) == len(fake_regions)

@@ -1,18 +1,20 @@
 #!/usr/bin/env sh
+# Carefully check autoscaling settings, and if the ECS cluster has been up
+# for more than 30 minutes, set the scale to 0 and notify Slack.
 
 # Important note:
 # The ECS_CLUSTER_NAME variable does NOT have the cluster name.
 # It has the cluster's AutoScalingGroup name instead.
 # We should carefully rename it and update our GitLab variables.
 
-function alert_slack() {
+alert_slack() {
     clean_message=$(echo "$1" | tr -d '"'"'") # remove any risky quotes
     curl_data='{"text":"'"${clean_message}"'"}'
     curl_header='Content-type: application/json'
     curl -X POST -H "${curl_header}" --data "${curl_data}" "${WEBHOOK_URL}"
 }
 
-function fail() {
+fail() {
     message="$1"
     echo "${message}"
     alert_slack "${message}"
