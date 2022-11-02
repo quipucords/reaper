@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Find and delete volumes and snapshots that we deem to be too old.
 
@@ -13,12 +12,6 @@ import boto3
 from botocore.exceptions import ClientError
 from envparse import env
 
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(funcName)s - %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-)
 logger = logging.getLogger(__name__)
 
 REAP_AGE_DEFAULT = 7 * 24 * 60 * 60  # one week in seconds
@@ -198,6 +191,7 @@ def delete_snapshot(ec2_client, snapshot):
 
 def reap():
     """Iterate through all regions to delete old volumes and snapshots."""
+    logger.info("Preparing to delete AWS volumes and snapshots.")
     account = get_account()
     now = get_now()
     oldest_allowed_snapshot_age = now - datetime.timedelta(seconds=REAP_AGE_SNAPSHOTS)

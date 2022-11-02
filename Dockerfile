@@ -14,4 +14,5 @@ RUN microdnf update \
     && poetry config virtualenvs.in-project true \
     && poetry install -n --no-dev
 
-COPY bin/ ./
+COPY bin/*.sh bin/
+COPY reaper/*.py reaper/
