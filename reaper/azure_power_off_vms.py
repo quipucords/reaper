@@ -79,12 +79,66 @@ def handle_regular_vms(compute_client):
             power_off_vm(compute_client, vm)
 
 
+def get_scale_sets(compute_client):
+    """Get iterator of all VM scale sets."""
+    scale_sets = compute_client.virtual_machine_scale_sets.list_all()
+    return scale_sets
+
+
+def get_vms_for_scale_set(compute_client, scale_set):
+    """Get iterator of all VMs in the given VM scale set."""
+    resource_group = get_resource_group_name(scale_set)
+    vms = compute_client.virtual_machine_scale_set_vms.list(
+        resource_group_name=resource_group,
+        virtual_machine_scale_set_name=scale_set.name,
+        expand="instanceView",
+    )
+    return vms
+
+
+def power_off_scale_set_vm(compute_client, scale_set, vm):
+    """Power off the given VM belonging to the given scale set."""
+    resource_group = get_resource_group_name(vm)
+    # Note: begin_power_off returns an LROPoller object that we could repeatedly
+    # poll until the operation is done, but we don't need to monitor this here.
+    # We can just discard the result and assume it completes.
+    compute_client.virtual_machine_scale_set_vms.begin_power_off(
+        resource_group_name=resource_group,
+        vm_scale_set_name=scale_set.name,
+        instance_id=vm.instance_id,
+    )
+
+
+def handle_scale_set_vms(compute_client):
+    """Identify and conditionally power off VM scale set VMs."""
+    scale_sets = get_scale_sets(compute_client)
+    for scale_set in scale_sets:
+        if has_bypass_tag(scale_set):
+            logger.info(
+                f"VM scale set {scale_set.name} has bypass tag "
+                "and will not be powered off."
+            )
+            continue
+        vms = get_vms_for_scale_set(compute_client, scale_set)
+        for vm in vms:
+            if has_bypass_tag(vm):
+                logger.info(
+                    f"VM scale set VM {vm.name} has bypass tag "
+                    "and will not be powered off."
+                )
+                continue
+            if vm_is_running(vm):
+                logger.info(f"Attempting to power off VM scale set VM {vm.name}")
+                power_off_scale_set_vm(compute_client, scale_set, vm)
+
+
 def reap():
     """Power off all running VMs."""
     logger.info("Preparing to power off Azure VMs.")
     azure_subscription_id = env("AZURE_SUBSCRIPTION_ID")
     compute_client = get_azure_compute_client(azure_subscription_id)
     handle_regular_vms(compute_client)
+    handle_scale_set_vms(compute_client)
 
 
 if __name__ == "__main__":
