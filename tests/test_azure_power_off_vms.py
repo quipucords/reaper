@@ -220,3 +220,97 @@ def test_handle_regular_vms():
     mock_client.virtual_machines.begin_power_off.assert_called_once_with(
         mock_vm_running_resource_group, mock_vm_running.name
     )
+
+
+def test_get_scale_sets():
+    """Test get_scale_sets retrieves a list of Virtual Machine Scale Sets."""
+    mock_client = Mock()
+    scale_sets = reaper.azure_power_off_vms.get_scale_sets(mock_client)
+    mock_client.virtual_machine_scale_sets.list_all.assert_called_once_with()
+    assert scale_sets == mock_client.virtual_machine_scale_sets.list_all.return_value
+
+
+def test_get_vms_for_scale_set():
+    """Test get_vms_for_scale_set retrieves a list of VMs from the VM Scale Set."""
+    mock_client = Mock()
+    scale_set_name = str(uuid.uuid4())
+    scale_set_resource_group = str(uuid.uuid4())
+    mock_scale_set = create_mock_resource(
+        resource_group=scale_set_resource_group, name=scale_set_name
+    )
+
+    vms = reaper.azure_power_off_vms.get_vms_for_scale_set(mock_client, mock_scale_set)
+
+    mock_client.virtual_machine_scale_set_vms.list.assert_called_once_with(
+        resource_group_name=scale_set_resource_group,
+        virtual_machine_scale_set_name=scale_set_name,
+        expand="instanceView",
+    )
+    assert vms == mock_client.virtual_machine_scale_set_vms.list.return_value
+
+
+def test_power_off_scale_set_vm():
+    """Test power_off_scale_set_vm correctly powers off the VMSS Virtual Machine."""
+    mock_client = Mock()
+    mock_scale_set = create_mock_resource()
+    vm_resource_group = str(uuid.uuid4())
+    mock_vm = create_mock_resource(resource_group=vm_resource_group)
+
+    reaper.azure_power_off_vms.power_off_scale_set_vm(
+        mock_client, mock_scale_set, mock_vm
+    )
+
+    mock_client.virtual_machine_scale_set_vms.begin_power_off(
+        resource_group_name=vm_resource_group,
+        vm_scale_set_name=mock_scale_set.name,
+        instance_id=mock_vm.instance_id,
+    )
+
+
+def test_handle_scale_set_vms():
+    """Test handle_scale_set_vms bypasses or powers off VMSS VMs correctly."""
+    # This VMSS has bypass tag, and all its VMs should be skipped.
+    mock_scale_set_with_bypass = create_mock_resource(
+        tags=synthesize_tags(with_bypass_tag=True)
+    )
+
+    # VMSS has no bypass tag. Its VMS should be checked.
+    mock_scale_set = create_mock_resource()
+    # First VM is running but has bypass tag. It should be skipped.
+    mock_vm_running_with_bypass = create_mock_resource(
+        name="mock_vm_running_with_bypass",
+        tags=synthesize_tags(with_bypass_tag=True),
+        is_running=True,
+        include_statuses=True,
+    )
+    # Second VM is running but does not have bypass tag. It should be powered off.
+    mock_vm_running = create_mock_resource(
+        name="mock_vm_running",
+        is_running=True,
+        include_statuses=True,
+    )
+    # Third VM is not running. It should be skipped.
+    mock_vm_not_running = create_mock_resource(
+        name="mock_vm_not_running", is_running=False, include_statuses=True
+    )
+    mock_vms = [mock_vm_running_with_bypass, mock_vm_running, mock_vm_not_running]
+
+    mock_client = Mock()
+    with patch.object(
+        reaper.azure_power_off_vms, "get_scale_sets"
+    ) as mock_get_scale_sets, patch.object(
+        reaper.azure_power_off_vms, "get_vms_for_scale_set"
+    ) as mock_get_vms_for_scale_set, patch.object(
+        reaper.azure_power_off_vms, "power_off_scale_set_vm"
+    ) as mock_power_off_scale_set_vm:
+        mock_get_scale_sets.return_value = [mock_scale_set_with_bypass, mock_scale_set]
+        mock_get_vms_for_scale_set.side_effect = [mock_vms]
+        reaper.azure_power_off_vms.handle_scale_set_vms(mock_client)
+
+        # power_off_scale_set_vm should be called only once for the one untagged and
+        # powered VM in the second VMSS. The first VMSS should be skipped entirely due
+        # to its bypass tag, and the other VMs in the second VMSS either have the bypass
+        # tag or are not powered on.
+        mock_power_off_scale_set_vm.assert_called_once_with(
+            mock_client, mock_scale_set, mock_vm_running
+        )
