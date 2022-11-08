@@ -17,14 +17,12 @@ def get_azure_compute_client(azure_subscription_id):
 
 def vm_is_running(vm):
     """Return true if the vm specified has a PowerState/running state."""
-    running = False
     if vm and vm.instance_view:
         for status in vm.instance_view.statuses:
             if status.code == "PowerState/running":
                 logger.info(f"Found running VM {vm.name}")
-                running = True
-                break
-    return running
+                return True
+    return False
 
 
 def has_bypass_tag(vm):
