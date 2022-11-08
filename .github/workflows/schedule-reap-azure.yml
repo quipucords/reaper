@@ -1,0 +1,43 @@
+name: Scheduled reap Azure tenants
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  docker:
+    uses: ./.github/workflows/docker-build.yml
+    secrets:
+      GHCR_BOT_USERNAME: ${{ secrets.GHCR_BOT_USERNAME }}
+      GHCR_BOT_TOKEN: ${{ secrets.GHCR_BOT_TOKEN }}
+  reap-azure:
+    strategy:
+      fail-fast: false
+      matrix:
+        subscription:
+          - {tenant_id: AZ_RHD01_TENANT_ID, subscription_id: AZ_RHD01_SUBSCRIPTION_ID, client_id: AZ_RHD01_CLIENT_ID, client_secret: AZ_RHD01_CLIENT_SECRET}
+          - {tenant_id: AZ_RHD02_TENANT_ID, subscription_id: AZ_RHD02_SUBSCRIPTION_ID, client_id: AZ_RHD02_CLIENT_ID, client_secret: AZ_RHD02_CLIENT_SECRET}
+          - {tenant_id: AZ_EPHEM_TENANT_ID, subscription_id: AZ_EPHEM_SUBSCRIPTION_ID, client_id: AZ_EPHEM_CLIENT_ID, client_secret: AZ_EPHEM_CLIENT_SECRET}
+          - {tenant_id: AZ_STAGE_TENANT_ID, subscription_id: AZ_STAGE_SUBSCRIPTION_ID, client_id: AZ_STAGE_CLIENT_ID, client_secret: AZ_STAGE_CLIENT_SECRET}
+          - {tenant_id: AZ_PROD_TENANT_ID, subscription_id: AZ_PROD_SUBSCRIPTION_ID, client_id: AZ_PROD_CLIENT_ID, client_secret: AZ_PROD_CLIENT_SECRET}
+    name: reap Azure tenants
+    needs: [docker]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cloudigrade/reaper:latest
+      credentials:
+        username: ${{ secrets.GHCR_BOT_USERNAME }}
+        password: ${{ secrets.GHCR_BOT_TOKEN }}
+    env:
+      AZURE_TENANT_ID: ${{ secrets[matrix.subscription.tenant_id] }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets[matrix.subscription.subscription_id] }}
+      AZURE_CLIENT_ID: ${{ secrets[matrix.subscription.client_id] }}
+      AZURE_CLIENT_SECRET: ${{ secrets[matrix.subscription.client_secret] }}
+    steps:
+      - run: |
+          cd /opt/reaper
+          export AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET
+          poetry run python -m reaper.azure_power_off_vms
