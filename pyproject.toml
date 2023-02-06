@@ -8,7 +8,7 @@ authors = ["Brad Smith <brasmith@redhat.com>"]
 python = "^3.8"
 envparse = "^0.2.0"
 boto3 = "^1.16.4"
-azure-mgmt-compute = "^28.0.0"
+azure-mgmt-compute = "^29.0.0"
 azure-identity = "^1.10.0"
 
 [tool.poetry.dev-dependencies]
