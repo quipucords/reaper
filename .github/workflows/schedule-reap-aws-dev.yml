@@ -47,6 +47,6 @@ jobs:
           cd /opt/reaper
           export AWS_DEFAULT_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
           export REAP_AGE_SNAPSHOTS REAP_AGE_VOLUMES REAP_DRYRUN REAP_BYPASS_TAG WEBHOOK_URL
-          sh ./bin/aws-zero-autoscaling.sh
-          sh ./bin/aws-stop-instances.sh
+          poetry run sh ./bin/aws-zero-autoscaling.sh
+          poetry run sh ./bin/aws-stop-instances.sh
           poetry run python -m reaper.aws_delete
