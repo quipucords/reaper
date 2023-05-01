@@ -1,5 +1,5 @@
 ### Base Image
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.7-1049 as base
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.1.0-1829 as base
 
 ENV VIRTUAL_ENV=/opt/reaper/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
@@ -7,7 +7,7 @@ WORKDIR /opt/reaper/
 COPY pyproject.toml poetry.lock ./
 
 RUN microdnf update \
-    && microdnf install python38 \
+    && microdnf -y install python3 python3-pip \
     && python3 -m pip install -U pip \
     && python3 -m pip install awscli \
     && python3 -m pip install poetry \
