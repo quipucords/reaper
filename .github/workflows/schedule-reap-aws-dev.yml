@@ -34,7 +34,7 @@ jobs:
     needs: [docker]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/cloudigrade/reaper:latest
+      image: ghcr.io/quipucords/reaper:latest
       credentials:
         username: ${{ secrets.GHCR_BOT_USERNAME }}
         password: ${{ secrets.GHCR_BOT_TOKEN }}
