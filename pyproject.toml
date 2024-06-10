@@ -13,11 +13,7 @@ azure-identity = "^1.10.0"
 awscli = "^1.29.62"
 
 [tool.poetry.dev-dependencies]
-flake8-black = "*"
-flake8-docstrings = "*"
-flake8-import-order = "*"
-isort = "*"
-black = {version = "*", allow-prereleases = true}
+ruff = "^0"
 pytest = "*"
 coverage = "*"
 
