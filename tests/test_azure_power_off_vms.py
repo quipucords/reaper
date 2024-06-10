@@ -1,6 +1,7 @@
 """Unit tests for reaper.azure_power_off_vms."""
-from unittest.mock import Mock, patch
+
 import uuid
+from unittest.mock import Mock, patch
 
 import reaper.azure_power_off_vms
 

@@ -1,4 +1,5 @@
 """Shut down running Azure VMs."""
+
 import logging
 
 from azure.identity import EnvironmentCredential

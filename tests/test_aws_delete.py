@@ -1,4 +1,5 @@
 """Unit tests for reaper.aws_delete."""
+
 import datetime
 from unittest.mock import Mock, call, patch
 
