@@ -26,7 +26,7 @@ jobs:
       - run: docker build --cache-from $IMAGE_NAME:latest .
   deploy-build-and-push-image:
     name: Build and Push Image
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     needs: [docker-build]
     runs-on: ubuntu-latest
     container:
