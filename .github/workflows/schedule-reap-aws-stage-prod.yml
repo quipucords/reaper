@@ -4,9 +4,11 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
   AWS_DEFAULT_REGION: us-east-1
 
-on:
-  schedule:
-    - cron: '30 * * * *'
+# Disabling all scheduled jobs for now.
+# Pulls from GHCR no longer work after 2024-12-09 because the secrets are no longer valid.
+# on:
+#   schedule:
+#     - cron: '30 * * * *'
 
 jobs:
   docker:

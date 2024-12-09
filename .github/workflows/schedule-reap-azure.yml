@@ -3,9 +3,11 @@ name: Scheduled reap Azure tenants
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/reaper
 
-on:
-  schedule:
-    - cron: '0 3 * * *'
+# Disabling all scheduled jobs for now.
+# Pulls from GHCR no longer work after 2024-12-09 because the secrets are no longer valid.
+# on:
+#   schedule:
+#     - cron: '0 3 * * *'
 
 jobs:
   docker:
