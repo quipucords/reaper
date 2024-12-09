@@ -25,6 +25,9 @@ jobs:
       - run: docker pull $IMAGE_NAME:latest || true
       - run: docker build --cache-from $IMAGE_NAME:latest .
   deploy-build-and-push-image:
+    # Pushes to GHCR no longer work after 2024-12-09 because the secrets are no longer valid.
+    # I am leaving this code alive to indicate failure risks by GH actions when new code lands on main.
+    # Images are being built but will never successfully push to the GHCR using the bot's auth token.
     name: Build and Push Image
     if: github.ref == 'refs/heads/main'
     needs: [docker-build]
